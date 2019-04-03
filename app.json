@@ -1,0 +1,10 @@
+{
+    "name": "CloudZoo Issuer Example",
+    "description": "A starting point for a third-party Cloud Zoo issuer",
+    "repository": "https://github.com/mcneel/cloudzoo-issuer",
+    "keywords": ["rhino3d", "cloudzoo", "license"],
+    "addons": ["heroku-postgresql"],
+    "scripts": {
+        "postdeploy": "python -c \"from app import db; db.create_all()\""
+    }
+}

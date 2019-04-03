@@ -1,0 +1,13 @@
+version: "3"
+services:
+  web:
+    build: .
+    command: gunicorn app:app -w 2 --log-file=- --access-logfile=- --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://postgres@db
+    depends_on:
+      - db
+  db:
+    image: postgres

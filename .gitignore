@@ -105,3 +105,6 @@ venv.bak/
 
 # sqlite test db
 *.db
+
+# vscode
+.vscode/*

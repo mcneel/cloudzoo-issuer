@@ -24,7 +24,7 @@ The steps below will get you up and running on your local machine for developmen
     ```
 1. Install python packages
     ```commandline
-    pip3 install -r requirements.txt
+    $ pip3 install -r requirements.txt
     ```
 1. Create a .env file
     ```commandline
@@ -42,7 +42,7 @@ The steps below will get you up and running on your local machine for developmen
 
 1. Run the app
     ```commandline
-    flask run
+    $ flask run
     ```
 
 1. In another terminal, test the endpoints
@@ -51,3 +51,17 @@ The steps below will get you up and running on your local machine for developmen
 
     You have 0 licenses!
     ```
+
+## Deploy
+
+### Docker
+
+```commandline
+$ docker-compose up -d
+$ docker-compose exec web python
+
+>>> from app import db
+>>> db.create_all()
+
+$ docker-compose logs -f
+```

@@ -11,14 +11,18 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DATABASE_URL') or 'sqlite:///test.db'
 db = SQLAlchemy(app)
 
+ISSUER_ID = environ.get('ISSUER_ID')
+ISSUER_SECRET = environ.get('ISSUER_SECRET')
+ISSUER_NAME = "Dolfinito"
 
 ################################################## DATABSE CODE ########################################################
 
 
 class License(db.Model):
+    """This object represents a License object for your product. See https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-license/ for details on a license object."""
     serial = db.Column(db.String(), primary_key=True)
     key = db.Column(db.String(), unique=True, nullable=False)
-    product_name = db.Column(db.String(), nullable=False)
+    product_id = db.Column(db.String(), nullable=False)
     entity_id = db.Column(db.String(), nullable=False)
     enabled = db.Column(db.Boolean, nullable=False)
     number_of_seats = db.Column(db.Integer(), nullable=False)
@@ -31,10 +35,11 @@ class License(db.Model):
         return {
             "id": self.serial,
             "product_name": self.product_name,
-            "entity_id": self.entity_id,
+            "aud": self.product_id,
+            "iss": ISSUER_ID,
             "exp": time.mktime(self.expiration_date.timetuple()),
             "number_of_seats": self.number_of_seats,
-            "edition": {"en": "Full Edition"}
+            "editions": {"en": "Full Edition"}
         }
 
     def __repr__(self):
@@ -42,26 +47,27 @@ class License(db.Model):
 
 @app.cli.command()
 def create_db():
+    """This method simply creates some dummy licenses for demo purposes and inserts them into the database."""
     db.create_all()
 
     license_1 = License(
         key="LICENSE_KEY_1",
         serial="SERIAL_NO_1",
-        product_name="DOLPHINITO",
+        product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=True
     )
 
     license_2 = License(
         key="LICENSE_KEY_2",
         serial="SERIAL_NO_2",
-        product_name="DOLPHINITO",
+        product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=False
     )
 
     license_3 = License(
         key="LICENSE_KEY_3",
         serial="SERIAL_NO_3",
-        product_name="DOLPHINITO",
+        product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=True,
         entity_id="595959595959595-User",
         date=datetime.datetime(year=2018,month=11,day=30)
@@ -80,7 +86,7 @@ def check_auth(issuer_id, secret):
     """This function is called to check if a issuer_id /
     secret combination is valid.
     """
-    return issuer_id == 'ISSUER_ID_HERE' and secret == 'ISSUER_SECRET_HERE'
+    return issuer_id == ISSUER_ID and secret == ISSUER_SECRET
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
@@ -90,6 +96,7 @@ def authenticate():
         {'WWW-Authenticate': 'Basic realm="Credentials Required"'})
 
 def requires_auth(f):
+    """A convenience decorator that makes it simple to enforce authentication on enddpoints."""
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
@@ -116,7 +123,8 @@ def info():
 @requires_auth
 def add_license():
     """See if a license can be added to an entity or whether we should ask more information, or whether we should
-    deny the request. Note that you may have additional requirements depending on your business requirements."""
+    deny the request. Note that you may have additional requirements depending on your business requirements.
+    See more info about this endpoint at: https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-implement-http-callbacks/#post-add_license"""
     payload_dict = request.get_json()
     product_name = payload_dict.get("aud")
     key = payload_dict.get("key")
@@ -137,7 +145,7 @@ def add_license():
     if not license.enabled:
         return Response(
             jsonify({"description": "The license key '{}' cannot be added at this time. Please contact "
-                                    "(Dolfinito®)[https://www.dolfinito.com/support] for assistance.".format(key)}),
+                                    "({}®)[https://www.dolfinito.com/support] for assistance.".format(key, ISSUER_NAME)}),
             409
         )
 
@@ -145,7 +153,7 @@ def add_license():
     if license.entity_id is not None and license.entity_id != entity_id:
         return Response(
             jsonify({"description": "The license key '{}' has already been validated by someone else. Please contact "
-                                    "(Dolfinito®)[https://www.dolfinito.com/support] for assistance.".format(key)}),
+                                    "({}®)[https://www.dolfinito.com/support] for assistance.".format(key, ISSUER_NAME)}),
             409
         )
 
@@ -173,7 +181,7 @@ def add_license():
         if license.upgrade_from_key is not None and license.upgrade_from_key != precondition:
             return Response(
                 jsonify({"description": "The license key '{}' has already been upgraded to a different license key. Please contact "
-                                        "(Dolfinito®)[https://www.dolfinito.com/support] for assistance.".format(precondition)}),
+                                        "({}®)[https://www.dolfinito.com/support] for assistance.".format(precondition, ISSUER_NAME)}),
                 412
             )
 
@@ -196,14 +204,13 @@ def add_license():
     else:
         licenses = [license.to_json_dict()]
 
-    #Add full license
-    return jsonify({"licenses": [licenses]})
+    return jsonify({"licenses": licenses})
 
 @app.route("/remove_license", methods=["POST"])
 @requires_auth
 def remove_license():
     """See if a license cluster can be removed from an entity. We make sure to note that a license is no longer
-    in the entity."""
+    in the entity. See more info about this endpoint at: https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-implement-http-callbacks/#post-remove_license"""
     payload_dict = request.get_json()
 
     licenses = []
@@ -230,7 +237,7 @@ def remove_license():
         #There is an issue with the state of the data.
         return Response(
             jsonify({"description": "The license(s) cannot be currently be removed. Please contact "
-                                    "(Dolfinito®)[https://www.dolfinito.com/support] for assistance.",
+                                    "({}®)[https://www.dolfinito.com/support] for assistance.".format(ISSUER_NAME),
                      "details": "License key count mismatch"}),
             400
         )
@@ -238,7 +245,8 @@ def remove_license():
 @app.route("/get_license", methods=["GET"])
 @requires_auth
 def get_license():
-    """Return information about a specific license so users can see details about the license."""
+    """Return information about a specific license so users can see details about the license.
+    See more info about this endpoint at https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-implement-http-callbacks/#get-get_license"""
     product_name = request.args.get("aud")
     key = request.args.get("key")
 
@@ -251,10 +259,3 @@ def get_license():
         )
     else:
         return jsonify(license.to_json_dict())
-
-
-@app.route("/get_products", methods=["GET"])
-@requires_auth
-def get_products():
-    """Return a list of all the products that we, the issuer, support."""
-    pass

@@ -9,6 +9,7 @@ from flask import request, Response
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DATABASE_URL') or 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 ISSUER_ID = environ.get('ISSUER_ID')
@@ -25,9 +26,9 @@ class License(db.Model):
     product_id = db.Column(db.String(), nullable=False)
     entity_id = db.Column(db.String(), nullable=False)
     enabled = db.Column(db.Boolean, nullable=False)
-    number_of_seats = db.Column(db.Integer(), nullable=False)
+    number_of_seats = db.Column(db.Integer(), nullable=False, default=1)
     expiration_date = db.Column(db.DateTime(), nullable=True)
-    is_upgrade = db.Column(db.Boolean, nullable=False)
+    is_upgrade = db.Column(db.Boolean, nullable=False, default=False)
     upgrade_from_key = db.Column(db.String(), nullable=True)
     date = db.Column(db.DateTime(), nullable=True)
 
@@ -55,6 +56,7 @@ def create_db():
         serial="SERIAL_NO_1",
         product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=True
+        # TODO: entity_id="something"
     )
 
     license_2 = License(
@@ -62,6 +64,7 @@ def create_db():
         serial="SERIAL_NO_2",
         product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=False
+        # TODO: entity_id="something"
     )
 
     license_3 = License(

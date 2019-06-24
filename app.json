@@ -6,12 +6,13 @@
     "addons": ["heroku-postgresql"],
     "env": {
         "ISSUER_ID": {
-          "description": "A secret key for verifying the integrity of signed cookies.",
-          "generator": "secret"
+          "description": "You should have received this from McNeel (Contact aj@mcneel.com if you haven't)."
         },
         "ISSUER_SECRET": {
-          "description": "The number of processes to run.",
-          "value": "5"
+          "description": "You should have received this from McNeel (Contact aj@mcneel.com if you haven't)."
+        },
+        "ISSUER_NAME": {
+          "description": "The name of your company."
         }
     },
     "scripts": {

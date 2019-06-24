@@ -13,7 +13,7 @@
           "description": "The number of processes to run.",
           "value": "5"
         }
-    }
+    },
     "scripts": {
         "postdeploy": "python -c \"from app import db; db.create_all()\""
     }

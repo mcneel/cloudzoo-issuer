@@ -4,6 +4,16 @@
     "repository": "https://github.com/mcneel/cloudzoo-issuer",
     "keywords": ["rhino3d", "cloudzoo", "license"],
     "addons": ["heroku-postgresql"],
+    "env": {
+        "ISSUER_ID": {
+          "description": "A secret key for verifying the integrity of signed cookies.",
+          "generator": "secret"
+        },
+        "ISSUER_SECRET": {
+          "description": "The number of processes to run.",
+          "value": "5"
+        }
+    }
     "scripts": {
         "postdeploy": "python -c \"from app import db; db.create_all()\""
     }

@@ -37,7 +37,7 @@ class License(db.Model):
             "product_name": self.product_name,
             "aud": self.product_id,
             "iss": ISSUER_ID,
-            "exp": time.mktime(self.expiration_date.timetuple()),
+            "exp": int(time.mktime(self.expiration_date.timetuple())),
             "number_of_seats": self.number_of_seats,
             "editions": {"en": "Full Edition"}
         }

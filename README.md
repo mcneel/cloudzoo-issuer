@@ -1,71 +1,72 @@
 # cloudzoo-issuer
 
-A starting point for a third-party Cloud Zoo issuer
+A _starting point_ for a third-party Cloud Zoo issuer
 
 ## Getting Started
 
-The steps below will get you up and running on your local machine for development and testing. The instructions are currently macOS-specific. You'll need `git`, Python 3, `pip` and `virtualenv` pre-installed on your machine.
+The steps below will get you up and running on your local machine for development and testing. The instructions are currently macOS-specific. You'll need git and Python 3 pre-installed on your machine.
 
 1. Clone the repository
     ```commandline
-    $ git clone https://github.com/mcneel/cloudzoo-issuer
-    $ cd cloudzoo-issuer
+    git clone https://github.com/mcneel/cloudzoo-issuer
+    cd cloudzoo-issuer
     ```
 
-1. (Optional) Create a virtual environment
+1. (Optional) Use a [virtual environment](https://docs.python.org/3/tutorial/venv.html)
     ```commandline
-    $ virtualenv venv
+    python -m venv venv
+    . venv/bin/activate
+    pip install -U pip wheel
     ```
     _This allows you to install python packages for this project and only this project_
 
-1. (Optional) Activate the virtual environment
-    ```commandline
-    $ . venv/bin/activate
-    ```
 1. Install python packages
     ```commandline
-    $ pip3 install -r requirements.txt
+    pip install -r requirements.txt
     ```
-1. Create a .env file
+1. Create a .env file (for local use only)
     ```commandline
-    $ cp .env.example .env
+    cp .env.example .env
     ```
     _This allows you to define environment variables for this project and only this project_
 
 1. Create the initial database
     ```commandline
-    $ python3
-
-    >>> from app import db
-    >>> db.create_all()
+    flask create-db
     ```
 
 1. Run the app
     ```commandline
-    $ flask run
+    flask run
     ```
 
 1. In another terminal, test the endpoints
     ```commandline
-    $ curl localhost:5000/info
-
-    You have 0 licenses!
+    curl http://localhost:5000/info
+    ```
+    ```text
+    You have 3 licenses!
     ```
 
+## Troubleshooting
+
+Flask's default port (5000) is [used by AirPlay Receiver in macOS Monterey](https://stackoverflow.com/a/69829313). Either turn it off, or choose a different port (e.g. `flask run -p 5001`).
+
 ## Deploy
+
+### Heroku
+
+The recommended option. Super easy!
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+<!-- TODO: create db -->
 
 ### Docker
 
 ```commandline
-$ docker-compose up -d
-$ docker-compose exec web python
+docker-compose up -d
+docker-compose exec web flask create-db
 
->>> from app import db
->>> db.create_all()
-
-$ docker-compose logs -f
+docker-compose logs -f
 ```
-
-### Heroku
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)

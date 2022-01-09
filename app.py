@@ -6,8 +6,10 @@ import datetime
 import time
 from functools import wraps
 from flask import request
+from flask_talisman import Talisman
 
 app = Flask(__name__)
+Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DATABASE_URL') or 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)

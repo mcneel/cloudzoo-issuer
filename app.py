@@ -5,10 +5,13 @@ from os import environ
 import datetime
 import time
 from functools import wraps
-from flask import request, Response
+from flask import request
+from flask_talisman import Talisman
 
 app = Flask(__name__)
+Talisman(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DATABASE_URL') or 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 ISSUER_ID = environ.get('ISSUER_ID')
@@ -19,25 +22,26 @@ ISSUER_NAME = "Dolfinito"
 
 
 class License(db.Model):
+    __tablename__ = 'licenses'
     """This object represents a License object for your product. See https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-license/ for details on a license object."""
     serial = db.Column(db.String(), primary_key=True)
     key = db.Column(db.String(), unique=True, nullable=False)
     product_id = db.Column(db.String(), nullable=False)
-    entity_id = db.Column(db.String(), nullable=False)
+    entity_id = db.Column(db.String(), nullable=True)
     enabled = db.Column(db.Boolean, nullable=False)
-    number_of_seats = db.Column(db.Integer(), nullable=False)
+    number_of_seats = db.Column(db.Integer(), nullable=False, default=1)
     expiration_date = db.Column(db.DateTime(), nullable=True)
-    is_upgrade = db.Column(db.Boolean, nullable=False)
+    is_upgrade = db.Column(db.Boolean, nullable=False, default=False)
     upgrade_from_key = db.Column(db.String(), nullable=True)
-    date = db.Column(db.DateTime(), nullable=True)
+    date = db.Column(db.DateTime(), nullable=True, onupdate=datetime.datetime.utcnow)
 
     def to_json_dict(self):
         return {
             "id": self.serial,
-            "product_name": self.product_name,
+            "key": self.key,
             "aud": self.product_id,
             "iss": ISSUER_ID,
-            "exp": int(time.mktime(self.expiration_date.timetuple())),
+            "exp": int(time.mktime(self.expiration_date.timetuple())) if self.expiration_date is not None else None,
             "number_of_seats": self.number_of_seats,
             "editions": {"en": "Full Edition"}
         }
@@ -90,7 +94,7 @@ def check_auth(issuer_id, secret):
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
-    return Response(
+    return (
         jsonify({"description": "Incorrect Credentials"}),
         401,
         {'WWW-Authenticate': 'Basic realm="Credentials Required"'})
@@ -126,24 +130,23 @@ def add_license():
     deny the request. Note that you may have additional requirements depending on your business requirements.
     See more info about this endpoint at: https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-implement-http-callbacks/#post-add_license"""
     payload_dict = request.get_json()
-    product_name = payload_dict.get("aud")
-    key = payload_dict.get("key")
+    product_id = payload_dict['license'].get("aud")
+    key = payload_dict['license'].get("key")
     entity_id = payload_dict.get("entityId")
     precondition = payload_dict.get("precondition")
 
-    license = License.query().filter_by(key=key, product_name=product_name).first()
-
+    license = License.query.filter_by(key=key, product_id=product_id).first()
 
     #Add non-existing license.
     if license is None:
-        return Response(
+        return (
             jsonify({"description": "The license key '{}' is not a valid license".format(key)}),
             409
         )
 
     #Add disabled license.
     if not license.enabled:
-        return Response(
+        return (
             jsonify({"description": "The license key '{}' cannot be added at this time. Please contact "
                                     "({}®)[https://www.dolfinito.com/support] for assistance.".format(key, ISSUER_NAME)}),
             409
@@ -151,7 +154,7 @@ def add_license():
 
     #Add license to different entity.
     if license.entity_id is not None and license.entity_id != entity_id:
-        return Response(
+        return (
             jsonify({"description": "The license key '{}' has already been validated by someone else. Please contact "
                                     "({}®)[https://www.dolfinito.com/support] for assistance.".format(key, ISSUER_NAME)}),
             409
@@ -162,16 +165,16 @@ def add_license():
     if license.is_upgrade:
         #Missing precondition.
         if precondition is None:
-            return Response(
+            return (
                 jsonify({"description": "Please enter a previous license key to upgrade from."}),
                 428
             )
 
-        previous_key = License.query().filter_by(key=precondition).first()
+        previous_key = License.query.filter_by(key=precondition).first()
 
         #Non-existing previous license key
         if previous_key is None:
-            return Response(
+            return (
                 jsonify({"description": "The license key '{}' is not a valid license. "
                                         "Please enter a different license to upgrade from.".format(precondition)}),
                 412
@@ -179,7 +182,7 @@ def add_license():
 
         #Previous license already upgraded
         if license.upgrade_from_key is not None and license.upgrade_from_key != precondition:
-            return Response(
+            return (
                 jsonify({"description": "The license key '{}' has already been upgraded to a different license key. Please contact "
                                         "({}®)[https://www.dolfinito.com/support] for assistance.".format(precondition, ISSUER_NAME)}),
                 412
@@ -187,7 +190,7 @@ def add_license():
 
         #Previous license is a non-validated upgrade.
         if previous_key.is_upgrade and previous_key.entity_id is None:
-            return Response(
+            return (
                 jsonify({
                             "description": "The license key '{}' cannot be used to upgrade. Please enter "
                                            "a different license key to upgrade from.".format(precondition)}),
@@ -199,9 +202,12 @@ def add_license():
         a_license = previous_key
 
         while a_license.upgrade_from_key is not None:
-            a_license = License.query().filter_by(key=a_license.upgrade_from_key).first()
+            a_license = License.query.filter_by(key=a_license.upgrade_from_key).first()
             licenses.append(a_license.to_json_dict())
     else:
+        license.entity_id = entity_id
+        license.date = datetime.datetime.utcnow()
+        db.session.commit()
         licenses = [license.to_json_dict()]
 
     return jsonify({"licenses": licenses})
@@ -216,10 +222,10 @@ def remove_license():
     licenses = []
 
     for license in payload_dict["licenseCluster"]["licenses"]:
-        result = License.query().filter_by(
+        result = License.query.filter_by(
             serial=license["id"],
-            product_name=license["aud"],
-            entityId=payload_dict["entityId"]
+            product_id=license["aud"],
+            entity_id=payload_dict["entityId"]
         ).first()
 
         if result is not None:
@@ -227,15 +233,16 @@ def remove_license():
 
     if len(licenses) == 0 or len(licenses) == len(payload_dict["licenseCluster"]["licenses"]):
 
-        #Remove the licenses, if they haven't already been removed.
+        # remove the entity id from the licenses
         for license in licenses:
-            db.session.delete(license)
+            license.entity_id = None
+            license.date = datetime.datetime.utcnow()
 
         db.session.commit()
-        return Response(status=200)
+        return ('', 200)
     else:
         #There is an issue with the state of the data.
-        return Response(
+        return (
             jsonify({"description": "The license(s) cannot be currently be removed. Please contact "
                                     "({}®)[https://www.dolfinito.com/support] for assistance.".format(ISSUER_NAME),
                      "details": "License key count mismatch"}),
@@ -247,13 +254,13 @@ def remove_license():
 def get_license():
     """Return information about a specific license so users can see details about the license.
     See more info about this endpoint at https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-implement-http-callbacks/#get-get_license"""
-    product_name = request.args.get("aud")
+    product_id = request.args.get("aud")
     key = request.args.get("key")
 
-    license = License.query().filter_by(key=key, product_name=product_name).first()
+    license = License.query.filter_by(key=key, product_id=product_id).first()
 
     if license is None:
-        return Response(
+        return (
             jsonify({"description": "The license key is not valid"}),
             400
         )

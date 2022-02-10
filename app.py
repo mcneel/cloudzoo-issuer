@@ -10,7 +10,13 @@ from flask_talisman import Talisman
 
 app = Flask(__name__)
 Talisman(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DATABASE_URL') or 'sqlite:///test.db'
+db_uri = environ.get('DATABASE_URL')
+if not db_uri:
+    db_uri = 'sqlite:///test.db' # local dev
+elif db_uri.startswith("postgres://"):
+    # https://help.heroku.com/ZKNTJQSK/why-is-sqlalchemy-1-4-x-not-connecting-to-heroku-postgres
+    db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 

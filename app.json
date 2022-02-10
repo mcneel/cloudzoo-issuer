@@ -6,13 +6,16 @@
     "addons": ["heroku-postgresql"],
     "env": {
         "ISSUER_ID": {
-          "description": "You should have received this from McNeel (Contact aj@mcneel.com if you haven't)."
+          "description": "You should have received this from McNeel (see https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-register-plugin/)."
         },
         "ISSUER_SECRET": {
-          "description": "You should have received this from McNeel (Contact aj@mcneel.com if you haven't)."
+          "description": "You should have received this from McNeel (see https://developer.rhino3d.com/guides/rhinocommon/cloudzoo/cloudzoo-register-plugin/)."
         },
         "ISSUER_NAME": {
-          "description": "The name of your company."
+          "description": "The name of your company, e.g. Dolfinito®."
+        },
+        "ISSUER_NAME": {
+          "description": "The URL that customers should go to for support, e.g. https://www.dolfinito.com/support."
         }
     },
     "scripts": {

@@ -19,6 +19,8 @@ elif db_uri.startswith("postgres://"):
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+app.config['JSON_SORT_KEYS'] = False
 
 ISSUER_ID = environ.get('ISSUER_ID')
 ISSUER_SECRET = environ.get('ISSUER_SECRET')

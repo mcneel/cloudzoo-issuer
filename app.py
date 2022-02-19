@@ -49,8 +49,9 @@ class License(db.Model):
             "aud": self.product_id,
             "iss": ISSUER_ID,
             "exp": int(time.mktime(self.expiration_date.timetuple())) if self.expiration_date is not None else None,
-            "number_of_seats": self.number_of_seats,
-            "editions": {"en": "Full Edition"}
+            "numberOfSeats": self.number_of_seats,
+            "editions": {"en": "Full Edition"},
+            "metadata": None
         }
 
     def __repr__(self):

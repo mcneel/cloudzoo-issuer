@@ -14,12 +14,16 @@ class JsonTests(unittest.TestCase):
                 headers={"Authorization": f"Basic {creds}"},
             )
             json_data = rv.get_json()
+            self.assertEqual(json_data.get('id'), 'SERIAL_NO_3')
+            self.assertIn('key', json_data)
             self.assertEqual(
                 json_data.get("aud"), "3e200daa-6bf8-470b-bd6a-4f55996052c3"
             )
+            self.assertIsNotNone(json_data.get('iss'))
+            self.assertEqual(json_data.get("exp"), 1546128000)
             self.assertIsNotNone(json_data.get("editions"))
             self.assertEqual(json_data["editions"].get("en"), "Full Edition")
-            self.assertEqual(json_data.get("exp"), 1546128000)
+            self.assertGreater(json_data.get('numberOfSeats'), 0)
 
     def test_get_license_no_auth(self):
         with app.test_client() as c:

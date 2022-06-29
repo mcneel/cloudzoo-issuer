@@ -158,7 +158,7 @@ def add_license():
     if not license.enabled:
         return (
             jsonify({"description": "The license key '{}' cannot be added at this time. Please contact "
-                                    "({})[{}] for assistance.".format(key, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
+                                    "[{}]({}) for assistance.".format(key, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
             409
         )
 
@@ -166,7 +166,7 @@ def add_license():
     if license.entity_id is not None and license.entity_id != entity_id:
         return (
             jsonify({"description": "The license key '{}' has already been validated by someone else. Please contact "
-                                    "({})[{}] for assistance.".format(key, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
+                                    "[{}]({}) for assistance.".format(key, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
             409
         )
 
@@ -194,7 +194,7 @@ def add_license():
         if license.upgrade_from_key is not None and license.upgrade_from_key != precondition:
             return (
                 jsonify({"description": "The license key '{}' has already been upgraded to a different license key. Please contact "
-                                        "({})[{}] for assistance.".format(precondition, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
+                                        "[{}]({}) for assistance.".format(precondition, ISSUER_NAME, ISSUER_SUPPORT_URL)}),
                 412
             )
 
@@ -254,7 +254,7 @@ def remove_license():
         #There is an issue with the state of the data.
         return (
             jsonify({"description": "The license(s) cannot be currently be removed. Please contact "
-                                    "({})[{}}] for assistance.".format(ISSUER_NAME, ISSUER_SUPPORT_URL),
+                                    "[{}]({}) for assistance.".format(ISSUER_NAME, ISSUER_SUPPORT_URL),
                      "details": "License key count mismatch"}),
             400
         )

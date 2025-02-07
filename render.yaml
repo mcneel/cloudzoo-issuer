@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cloudzoo-issuer
+    env: python
+    repo: https://github.com/RohinJoshi1/cloudzoo-issuer
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    postDeployCommand: python -c "from app import db; db.create_all()"
+    plan: free

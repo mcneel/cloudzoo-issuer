@@ -58,7 +58,7 @@ Flask's default port (5000) is [used by AirPlay Receiver in macOS Monterey](http
 
 The recommended option. Super easy!
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/RohinJoshi1/cloudzoo-issuer))
 
 <!-- TODO: create db -->
 

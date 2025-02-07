@@ -3,7 +3,6 @@
     "description": "A starting point for a third-party Cloud Zoo issuer",
     "repository": "https://github.com/mcneel/cloudzoo-issuer",
     "keywords": ["rhino3d", "cloudzoo", "license"],
-    "addons": ["heroku-postgresql"],
     "env": {
         "ISSUER_ID": {
           "description": "You should have received this from McNeel (see https://www.rhino3d.com/go/cloudzoo/register-issuer)."

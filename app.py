@@ -83,7 +83,7 @@ def create_db():
         serial="SERIAL_NO_3",
         product_id="3e200daa-6bf8-470b-bd6a-4f55996052c3",
         enabled=True,
-        entity_id="595959595959595-User",
+        entity_id="595959595959595-|-User",
         date=datetime.datetime(year=2018,month=11,day=30)
     )
 
